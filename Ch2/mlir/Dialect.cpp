@@ -99,7 +99,7 @@ static mlir::ParseResult parseBinaryOp(mlir::OpAsmParser &parser,
 static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
   printer << " " << op->getOperands();//打印操作数
   printer.printOptionalAttrDict(op->getAttrs());//打印操作属性
-  printer << " : ";
+  printer << " -> ";
 
   // If all of the types are the same, print the type directly.
   Type resultType = *op->result_type_begin();//返回结果的操作数
@@ -109,7 +109,7 @@ static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
     return;
   }
 
-  // Otherwise, print a functional type.不相同，打印操作数类型，返回值类型
+  // Otherwise, print a functional type.不相同，打印操作数类型和函数类型(返回值类型)
   printer.printFunctionalType(op->getOperandTypes(), op->getResultTypes());//可查看printFunctionalType源码
   //例如：%1 = toy.add %x, %y : tensor<2x2xf32> ； 打印%x, %y : tensor<2x2xf32>
   //%2 = toy.add %x : f32, %y : i32 -> tensor<2x2xf32> ; 打印%x , %y : (f32 , i32) -> tensor<2x2xf32>
@@ -216,6 +216,14 @@ mlir::ParseResult AddOp::parse(mlir::OpAsmParser &parser,
 
 void AddOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 
+// SubOp
+void SubOp::build(mlir::OpBuilder &builder , mlir::OperationState &state,
+                  mlir::Value lhs , mlir::Value rhs){
+
+  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
+  state.addOperands({lhs, rhs});
+}
+
 //===----------------------------------------------------------------------===//
 // GenericCallOp
 //===----------------------------------------------------------------------===//
@@ -276,12 +284,21 @@ void MulOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
   state.addOperands({lhs, rhs});
 }
 
-mlir::ParseResult MulOp::parse(mlir::OpAsmParser &parser,
-                               mlir::OperationState &result) {
-  return parseBinaryOp(parser, result);
-}
+// mlir::ParseResult MulOp::parse(mlir::OpAsmParser &parser,
+//                                mlir::OperationState &result) {
+//   return parseBinaryOp(parser, result);
+// }
 
-void MulOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+// void MulOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
+//已经在MulOp的tablegen中写了assemblyFormat
+
+
+// DivOp
+// void DivOp::build(mlir::OpBuilder &builder , mlir::OperationState &state,
+//                   mlir::Value lhs, mlir::Value rhs){
+
+//   state.addTypes()
+// }
 
 //===----------------------------------------------------------------------===//
 // ReturnOp

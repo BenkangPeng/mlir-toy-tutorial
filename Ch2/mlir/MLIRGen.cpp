@@ -66,6 +66,7 @@ public:
     // We create an empty MLIR module and codegen functions one at a time and
     // add them to the module.
     theModule = mlir::ModuleOp::create(builder.getUnknownLoc());
+    //ModuleOp是builtin操作，定义见 /root/llvm-project/mlir/include/mlir/IR/BuiltinOps.td
 
     for (FunctionAST &f : moduleAST)
       mlirGen(f);
@@ -116,13 +117,16 @@ private:
   mlir::toy::FuncOp mlirGen(PrototypeAST &proto) {
     auto location = loc(proto.loc());
 
-    // This is a generic function, the return type will be inferred later.
+    // This is a generic function, the return type(写成了std::nullopt) will be inferred later.
     // Arguments type are uniformly unranked tensors.
     llvm::SmallVector<mlir::Type, 4> argTypes(proto.getArgs().size(),
                                               getType(VarType{}));
     auto funcType = builder.getFunctionType(argTypes, std::nullopt);
+    //argTypes表示参数类型，std::nullopt表示返回类型，当前未指定，后续再推断
+    //funcType表示函数的类型，包括参数类型和返回类型
     return builder.create<mlir::toy::FuncOp>(location, proto.getName(),
                                              funcType);
+    //FuncOp::build(builder , state , name , functype , attrs),attr被缺省
   }
 
   /// Emit a new function and add it to the MLIR module.
@@ -132,12 +136,14 @@ private:
 
     // Create an MLIR function for the given prototype.
     builder.setInsertionPointToEnd(theModule.getBody());
+    //在theModule的末尾插入一个函数声明
     mlir::toy::FuncOp function = mlirGen(*funcAST.getProto());
     if (!function)
       return nullptr;
 
     // Let's start the body of the function now!
-    mlir::Block &entryBlock = function.front();
+    mlir::Block &entryBlock = function.front();//entryBlock是函数的入口块
+    //没找到.front()方法
     auto protoArgs = funcAST.getProto()->getArgs();
 
     // Declare all the function arguments in the symbol table.
@@ -205,6 +211,11 @@ private:
       return builder.create<AddOp>(location, lhs, rhs);
     case '*':
       return builder.create<MulOp>(location, lhs, rhs);
+    case '-':
+      return builder.create<SubOp>(location, lhs, rhs);
+    case '/':
+      mlir::Type output_type = mlir::UnrankedTensorType::get(builder.getF64Type());
+      return builder.create<DivOp>(location, output_type, lhs, rhs);
     }
 
     emitError(location, "invalid binary operator '") << binop.getOp() << "'";
@@ -259,7 +270,7 @@ private:
   ///      [4.000000e+00, 5.000000e+00, 6.000000e+00]]>} : () -> tensor<2x3xf64>
   ///
   mlir::Value mlirGen(LiteralExprAST &lit) {
-    auto type = getType(lit.getDims());
+    auto type = getType(lit.getDims());//return std::vector<int64_t>
 
     // The attribute is a vector with a floating point value per element
     // (number) in the array, see `collectData()` below for more details.
@@ -320,7 +331,7 @@ private:
     // Builtin calls have their custom operation, meaning this is a
     // straightforward emission.
     if (callee == "transpose") {
-      if (call.getArgs().size() != 1) {
+      if (call.getArgs().size() != 1) {//transpose只接受一个参数
         emitError(location, "MLIR codegen encountered an error: toy.transpose "
                             "does not accept multiple arguments");
         return nullptr;

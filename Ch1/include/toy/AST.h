@@ -205,7 +205,7 @@ public:
 /// This class represents the "prototype"(原型) for a function, which captures its
 /// name, and its argument names (thus implicitly the number of arguments the
 /// function takes).
-class PrototypeAST {
+class PrototypeAST {//函数原型，即函数声明，包括location,function name and args
   Location location;
   std::string name;
   std::vector<std::unique_ptr<VariableExprAST>> args;

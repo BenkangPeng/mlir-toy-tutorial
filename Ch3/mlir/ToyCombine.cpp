@@ -41,6 +41,9 @@ struct SimplifyRedundantTranspose : public mlir::OpRewritePattern<TransposeOp> {
     // Look through the input of the current transpose.
     mlir::Value transposeInput = op.getOperand();
     TransposeOp transposeInputOp = transposeInput.getDefiningOp<TransposeOp>();
+    //例如transpose(transpose(x)) , 那么transposeInput就是transpose(x)
+    //transposeInputOp = transpose
+    //transposeInputOp.getOperand() = x
 
     // Input defined by another transpose? If not, no match.
     if (!transposeInputOp)
@@ -64,5 +67,5 @@ void TransposeOp::getCanonicalizationPatterns(RewritePatternSet &results,
 void ReshapeOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                             MLIRContext *context) {
   results.add<ReshapeReshapeOptPattern, RedundantReshapeOptPattern,
-              FoldConstantReshapeOptPattern>(context);
+              FoldConstantReshapeOptPattern>(context);//定义在ToyCombine.td中
 }

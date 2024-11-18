@@ -108,10 +108,31 @@ def AddOp : Toy_Op<"add"> {
 
   // Indicate that the operation has a custom parser and printer method.
   let hasCustomAssemblyFormat = 1;
+  // let assemblyFormat = "$lhs `:` type($lhs) `,` $rhs `:` type($rhs) attr-dict `->` type(results) ";
 
   // Allow building an AddOp with from the two input operands.
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//SubOp
+def SubOp : Toy_Op<"sub"> {
+  let summary = "element-wise subtraction operation";
+  let description = [{
+    The "sub" operation performs element-wise subtraction between two tensors.
+    The shapes of the tensor operands are expected to match.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+  let results = (outs F64Tensor);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let assemblyFormat = "$lhs `:` type($lhs) `,` $rhs `:` type($rhs) attr-dict `->` type(results) ";
+
+  // Allow building an AddOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs , "Value":$rhs)>
   ];
 }
 
@@ -167,7 +188,7 @@ def FuncOp : Toy_Op<"func", [
   }];
 
   let hasCustomAssemblyFormat = 1;
-  let skipDefaultBuilders = 1;
+  let skipDefaultBuilders = 1;//跳过默认的builder，Ops.cpp.inc中不会生成FuncOp::build
 }
 
 //===----------------------------------------------------------------------===//
@@ -221,12 +242,33 @@ def MulOp : Toy_Op<"mul"> {
   }];
 
   let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
-  let results = (outs F64Tensor);
+  let results = (outs F64Tensor:$output);
 
   // Indicate that the operation has a custom parser and printer method.
-  let hasCustomAssemblyFormat = 1;
+  // let hasCustomAssemblyFormat = 1;
+  let assemblyFormat = "$lhs `:` type($lhs) `,` $rhs `:` type($rhs) attr-dict `->` type($output)";
 
   // Allow building a MulOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
+// MulOp
+//===----------------------------------------------------------------------===//
+
+def DivOp : Toy_Op<"div"> {
+  let summary = "element-wise division operation";
+  let description = [{
+    The "div" operation performs element-wise division between two
+    tensors. The shapes of the tensor operands are expected to match.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+  let results = (outs F64Tensor:$output);
+
+  let assemblyFormat = "$lhs `:` type($lhs) `,` $rhs `:` type($rhs) attr-dict `->` type($output)";
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
   ];
