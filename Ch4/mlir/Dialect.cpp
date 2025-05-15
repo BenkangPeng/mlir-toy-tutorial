@@ -44,7 +44,7 @@ using namespace mlir::toy;
 
 /// This class defines the interface for handling inlining with Toy
 /// operations.
-struct ToyInlinerInterface : public DialectInlinerInterface {
+struct ToyInlinerInterface : public DialectInlinerInterface {//DialectInlinerInterface用于整个dialect的operation
   using DialectInlinerInterface::DialectInlinerInterface;
 
   //===--------------------------------------------------------------------===//
@@ -73,6 +73,7 @@ struct ToyInlinerInterface : public DialectInlinerInterface {
 
   /// Handle the given inlined terminator(toy.return) by replacing it with a new
   /// operation as necessary.
+  /*内联return操作时，需要将source context中的变量替换为return的operands*/
   void handleTerminator(Operation *op, ValueRange valuesToRepl) const final {
     // Only "toy.return" needs to be handled here.
     auto returnOp = cast<ReturnOp>(op);
@@ -106,7 +107,7 @@ void ToyDialect::initialize() {
 #define GET_OP_LIST
 #include "toy/Ops.cpp.inc"
       >();
-  addInterfaces<ToyInlinerInterface>();
+  addInterfaces<ToyInlinerInterface>();//注册interface
 }
 
 //===----------------------------------------------------------------------===//
@@ -328,19 +329,29 @@ void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
 /// call interface.
 CallInterfaceCallable GenericCallOp::getCallableForCallee() {
   return (*this)->getAttrOfType<SymbolRefAttr>("callee");
+  /*返回被调用函数的符号引用
+  例如：
+  %4 = toy.generic_call @compute(...):...
+  调用GenericCallOp的getCallableForCallee方法返回@compute
+  */
 }
 
 /// Set the callee for the generic call operation, this is required by the call
 /// interface.
 void GenericCallOp::setCalleeFromCallable(CallInterfaceCallable callee) {
   (*this)->setAttr("callee", callee.get<SymbolRefAttr>());
+  /*该方法用于设置/更新GenericCallOp的callee属性
+  %2 = toy.generic_call @old_func(%0) :...
+  // 通过setCalleeFromCallable更改为调用new_func
+  // setCalleeFromCallable(SymbolRefAttr::get(context, "new_func"))
+  %2 = toy.generic_call @new_func(%0) :...*/
 }
 
 /// Get the argument operands to the called function, this is required by the
 /// call interface.
 Operation::operand_range GenericCallOp::getArgOperands() { return getInputs(); }
 
-/// Get the argument operands to the called function as a mutable range, this is
+/// Get the argument operands to the called function as a mutable(可变) range, this is
 /// required by the call interface.
 MutableOperandRange GenericCallOp::getArgOperandsMutable() {
   return getInputsMutable();

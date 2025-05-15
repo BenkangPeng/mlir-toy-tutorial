@@ -59,7 +59,7 @@ struct SimplifyRedundantTranspose : public mlir::OpRewritePattern<TransposeOp> {
 /// that they can be picked up by the Canonicalization framework.
 void TransposeOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                               MLIRContext *context) {
-  results.add<SimplifyRedundantTranspose>(context);
+  results.add<SimplifyRedundantTranspose>(context);//给TransposeOp注册pattern rewrite
 }
 
 /// Register our patterns as "canonicalization" patterns on the ReshapeOp so

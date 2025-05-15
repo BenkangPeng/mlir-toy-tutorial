@@ -196,7 +196,7 @@ def FuncOp : Toy_Op<"func", [
 //===----------------------------------------------------------------------===//
 
 def GenericCallOp : Toy_Op<"generic_call",
-    [DeclareOpInterfaceMethods<CallOpInterface>]> {
+    [DeclareOpInterfaceMethods<CallOpInterface>]> {/*CallOpInterface用于call operation，表示GenericCallOp会去调用其他的operation*/
   let summary = "generic call operation";
   let description = [{
     Generic calls represent calls to a user defined function that needs to
